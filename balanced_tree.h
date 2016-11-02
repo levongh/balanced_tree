@@ -30,6 +30,7 @@ private:
     };
 
     bt_node* m_head;
+    size_type m_size;
 };
 
 } // namespace std
