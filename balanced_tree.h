@@ -12,20 +12,20 @@ template <typename T,
          typename Allocator = std::allocator<T> >
 class balanced_tree
 {
-public:
+private:
     using value_type = typename T;
     using size_type = size_t;
 
+    // @{public interfaces
 public:
     balanced_tree();
-    balanced_tree(std::initializer_list<T> il);
-    balanced_tree(const balanced_tree&);
-    balanced_tree& operator= (const balanced_tree&);
-    balanced_tree(balanced_tree&&);
-    balanced_tree& operator= (balanced_tree&&);
+    balanced_tree(std::initializer_list<value_type> il);
+    balanced_tree(const balanced_tree& that);
+    balanced_tree& operator= (const balanced_tree& that);
+    balanced_tree(balanced_tree&& that);
+    balanced_tree& operator= (balanced_tree&& that);
     ~balanced_tree();
 
-    // @{public interfaces
 public:
     /*
      * @brief insert
@@ -40,7 +40,7 @@ public:
     /*
      * @brief insert
      */
-    void insert(std::initializer_list<T> il);
+    void insert(std::initializer_list<value_type> il);
 
 public:
     /*
@@ -85,10 +85,46 @@ public:
      */
     const_iterator find(const value_type& value) const noexcept;
 
+public:
+    class iterator
+    {
+    public:
+        typedef difference_type std::ptrdiff_t;
+        typedef value_type balanced_tree::value_type;
+        typedef pointer value_type*;
+        typedef reference value_type&;
+        typedef std::bidirectional_iterator_tag;
+
+    public:
+        iterator();
+        iterator(const iterator& that);
+        iterator(iterator&& that);
+        iterator& operator= (const iterator& that);
+        iterator& operator= (iterator&& that);
+        ~iterator();
+
+        reference operator* () const;
+        iterator& operator++ ();
+
+        bool operator== (const iterator& that);
+        bool operator!= (const iterator& that);
+
+        reference operator-> ();
+        iterator operator++ (int) const;
+
+        iterator& operator-- ();
+        iterator operator-- (int) const;
+
+    private:
+        bt_node* m_data;
+    };
+
+    // @}
+
 private:
     struct bt_node
     {
-        T m_data;
+        value_type m_value;
         bt_node* m_left_child;
         bt_node* m_right_child;
         bt_node* m_parent;
@@ -97,6 +133,10 @@ private:
 
     bt_node* m_head;
     size_type m_size;
+
+private:
+    static Compare s_less_than;
+    static Allocator s_allocator;
 };
 
 } // namespace std
