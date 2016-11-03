@@ -76,50 +76,101 @@ public:
 
 public:
     /*
-     * @brief fine elementy by value
+     * @brief find elementy by value
      */
     iterator find(const value_type& value) noexcept;
 
     /*
-     * @brief fine elementy by value
+     * @brief find elementy by value
      */
     const_iterator find(const value_type& value) const noexcept;
 
 public:
-    class iterator
+    /*
+     * @brief get a begin iterator on container
+     */
+    iterator begin();
+
+    /*
+     * @brief get a end iterator on container
+     */
+    iterator end();
+
+public:
+    /*
+     * @brief get a const begin iterator on container
+     */
+    const_iterator cbegin() const;
+
+    /*
+     * @brief get a const end iterator on container
+     */
+    const_iterator cend() const;
+
+public:
+    /*
+     * @brief get a reverse begin iterator on container
+     */
+    reverse_iterator rbegin();
+
+    /*
+     * @brief get a end iterator on container
+     */
+    reverse_iterator rend();
+
+public:
+    /*
+     * @brief get a const begin iterator on container
+     */
+    const_reverse_iterator crbegin() const;
+
+    /*
+     * @brief get a const end iterator on container
+     */
+    const_const_iterator crend() const;
+
+
+public:
+    typedef iterator iterator_helper<value_type*, value_type, false>;
+    typedef const_iterator iterator_helper<value_type const *, const value_type, false>;
+    typedef reverse_iterator iterator_helper<value_type*, value_type, true>;
+    typedef const_reverse_iterator iterator_helper<value_type const *, const value_type, true>;
+
+    // @}
+private:
+    template <typename PointerType, typename ReferenceType, bool is_reverse>
+    class iterator_helper
     {
     public:
         typedef difference_type std::ptrdiff_t;
         typedef value_type balanced_tree::value_type;
-        typedef pointer value_type*;
-        typedef reference value_type&;
+        typedef pointer PointerType;
+        typedef reference ReferenceType&;
         typedef std::bidirectional_iterator_tag;
 
     public:
-        iterator();
-        iterator(const iterator& that);
-        iterator(iterator&& that);
-        iterator& operator= (const iterator& that);
-        iterator& operator= (iterator&& that);
-        ~iterator();
+        iterator_helper();
+        iterator_helper(const iterator_helper& that);
+        iterator_helper(iterator_helper&& that);
+        iterator_helper& operator= (const iterator_helper& that);
+        iterator_helper& operator= (iterator_helper&& that);
+        ~iterator_helper();
 
         reference operator* () const;
-        iterator& operator++ ();
+        iterator_helper& operator++ ();
 
-        bool operator== (const iterator& that);
-        bool operator!= (const iterator& that);
+        bool operator== (const iterator_helper& that);
+        bool operator!= (const iterator_helper& that);
 
         reference operator-> ();
-        iterator operator++ (int) const;
+        iterator_helper operator++ (int) const;
 
-        iterator& operator-- ();
-        iterator operator-- (int) const;
+        iterator_helper& operator-- ();
+        iterator_helper operator-- (int) const;
 
     private:
         bt_node* m_data;
     };
-
-    // @}
 
 private:
     struct bt_node
@@ -138,5 +189,34 @@ private:
     static Compare s_less_than;
     static Allocator s_allocator;
 };
+
+namespace {
+
+template <typename NodeT, bool reverse>
+struct IncrementHelper;
+
+template <typename NodeT>
+struct IncrementHelper<NodeT, true>
+{
+    static NodeT* advance(const NodeT* node,
+            NodeT* (*incrementer)(const NodeT*),
+            NodeT* (*decrementer)(const NodeT*))
+    {
+        return decrementer(node);
+    }
+};
+
+template <typename NodeT>
+struct IncrementHelper<NodeT, false>
+{
+    static NodeT* advance(const NodeT* node,
+            NodeT* (*incrementer)(const NodeT*),
+            NodeT* (*decrementer)(const NodeT*))
+    {
+        return incrementer(node);
+    }
+};
+
+} // unnamed namespace
 
 } // namespace std
