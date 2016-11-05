@@ -131,14 +131,15 @@ public:
 
 
 public:
-    typedef iterator iterator_helper<value_type*, value_type, false>;
-    typedef const_iterator iterator_helper<value_type const *, const value_type, false>;
-    typedef reverse_iterator iterator_helper<value_type*, value_type, true>;
-    typedef const_reverse_iterator iterator_helper<value_type const *, const value_type, true>;
+    typedef iterator iterator_helper<value_type*, value_type, bt_node*>;
+    typedef const_iterator iterator_helper<value_type const *, const value_type, bt_node const *>;
+
+    typedef reverse_iterator reverse_iterator_helper<value_type*, value_type, bt_node*>;
+    typedef const_reverse_iterator reverse_iterator_helper<value_type const *, const value_type, bt_node const *>;
 
     // @}
 private:
-    template <typename PointerType, typename ReferenceType, bool is_reverse>
+    template <typename PointerType, typename ReferenceType, typename DataType>
     class iterator_helper
     {
     public:
@@ -149,28 +150,211 @@ private:
         typedef std::bidirectional_iterator_tag;
 
     public:
-        iterator_helper();
-        iterator_helper(const iterator_helper& that);
-        iterator_helper(iterator_helper&& that);
-        iterator_helper& operator= (const iterator_helper& that);
-        iterator_helper& operator= (iterator_helper&& that);
-        ~iterator_helper();
+        iterator_helper()
+            : m_data(nullptr)
+        {}
 
-        reference operator* () const;
-        iterator_helper& operator++ ();
+        iterator_helper(const iterator_helper& that)
+            : m_data(that.m_data)
+        {}
 
-        bool operator== (const iterator_helper& that);
-        bool operator!= (const iterator_helper& that);
+        iterator_helper(iterator_helper&& that)
+            : m_data(that.m_data)
+        {
+            that.m_data = nullptr;
+        }
 
-        reference operator-> ();
-        iterator_helper operator++ (int) const;
+        template <typename IterT>
+        iterator_helper(const IterT& that)
+            : m_data(that.m_data)
+        {}
 
-        iterator_helper& operator-- ();
+        iterator_helper& operator= (const iterator_helper& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        iterator_helper& operator= (iterator_helper&& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+                that.m_data = nullptr;
+            }
+            return *this;
+        }
+
+        template <typename IterT>
+        iterator_helper& operator= (const IterT& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        ~iterator_helper() = default;
+
+        reference operator* () const
+        {
+            return *m_data;
+        }
+
+        iterator_helper& operator++ ()
+        {
+            m_data = balanced_tree::successor(m_data);
+            return *this;
+        }
+
+        bool operator== (const iterator_helper& that)
+        {
+            return m_data = that.m_data;
+        }
+
+        bool operator!= (const iterator_helper& that)
+        {
+            return m_data != that.m_data;
+        }
+
+        reference operator-> ()
+        {
+            return *m_data;
+        }
+
+        const iterator_helper operator++ (int) const
+        {
+            iterator_helper tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        iterator_helper& operator-- ()
+        {
+            m_data = balanced_tree::predecessor(m_data);
+            return *this;
+        }
+
         iterator_helper operator-- (int) const;
+        {
+            iterator_helper tmp = *this;
+            --(*this);
+            return tmp;
+        }
 
     private:
-        bt_node* m_data;
+        DataType m_data;
     };
+
+    template <typename PointerType, typename ReferenceType, typename DataType>
+    class reverse_iterator_helper
+    {
+    public:
+        typedef difference_type std::ptrdiff_t;
+        typedef value_type balanced_tree::value_type;
+        typedef pointer PointerType;
+        typedef reference ReferenceType&;
+        typedef std::bidirectional_iterator_tag;
+
+    public:
+        reverse_iterator_helper()
+            : m_data(nullptr)
+        {}
+
+        reverse_iterator_helper(const reverse_iterator_helper& that)
+            : m_data(that.m_data)
+        {}
+
+        reverse_iterator_helper(reverse_iterator_helper&& that)
+            : m_data(that.m_data)
+        {
+            that.m_data = nullptr;
+        }
+
+        template <typename IterT>
+        reverse_iterator_helper(const IterT& that)
+            : m_data(that.m_data)
+        {}
+
+        reverse_iterator_helper& operator= (const reverse_iterator_helper& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        reverse_iterator_helper& operator= (reverse_iterator_helper&& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+                that.m_data = nullptr;
+            }
+            return *this;
+        }
+
+        template <typename IterT>
+        reverse_iterator_helper& operator= (const IterT& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        ~reverse_iterator_helper() = default;
+
+        reference operator* () const
+        {
+            return *m_data;
+        }
+
+        reverse_iterator_helper& operator++ ()
+        {
+            m_data = balanced_tree::predecessor(m_data);
+            return *this;
+        }
+
+        bool operator== (const reverse_iterator_helper& that)
+        {
+            return m_data = that.m_data;
+        }
+
+        bool operator!= (const reverse_iterator_helper& that)
+        {
+            return m_data != that.m_data;
+        }
+
+        reference operator-> ()
+        {
+            return *m_data;
+        }
+
+        const reverse_iterator_helper operator++ (int) const
+        {
+            reverse_iterator_helper tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        reverse_iterator_helper& operator-- ()
+        {
+            m_data = balanced_tree::successor(m_data);
+            return *this;
+        }
+
+        reverse_iterator_helper operator-- (int) const;
+        {
+            reverse_iterator_helper tmp = *this;
+            --(*this);
+            return tmp;
+        }
+
+    private:
+        DataType m_data;
+    };
+
 
 private:
     struct bt_node
@@ -189,34 +373,5 @@ private:
     static Compare s_less_than;
     static Allocator s_allocator;
 };
-
-namespace {
-
-template <typename NodeT, bool reverse>
-struct IncrementHelper;
-
-template <typename NodeT>
-struct IncrementHelper<NodeT, true>
-{
-    static NodeT* advance(const NodeT* node,
-            NodeT* (*incrementer)(const NodeT*),
-            NodeT* (*decrementer)(const NodeT*))
-    {
-        return decrementer(node);
-    }
-};
-
-template <typename NodeT>
-struct IncrementHelper<NodeT, false>
-{
-    static NodeT* advance(const NodeT* node,
-            NodeT* (*incrementer)(const NodeT*),
-            NodeT* (*decrementer)(const NodeT*))
-    {
-        return incrementer(node);
-    }
-};
-
-} // unnamed namespace
 
 } // namespace std
