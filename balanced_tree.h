@@ -18,45 +18,116 @@ private:
 
     // @{public interfaces
 public:
-    balanced_tree();
-    balanced_tree(std::initializer_list<value_type> il);
-    balanced_tree(const balanced_tree& that);
-    balanced_tree& operator= (const balanced_tree& that);
-    balanced_tree(balanced_tree&& that);
-    balanced_tree& operator= (balanced_tree&& that);
-    ~balanced_tree();
+    balanced_tree()
+        : m_head(nullptr)
+        , m_size(0)
+    {
+    }
+
+    balanced_tree(std::initializer_list<value_type> il)
+        : m_head(nullptr)
+        , m_size(0)
+    {
+        insert(il);
+    }
+
+    balanced_tree(const balanced_tree& that)
+        : m_head(nullptr)
+        , m_size(that.m_size)
+    {
+        copy(that.m_head, m_head);
+    }
+
+    balanced_tree& operator= (const balanced_tree& that)
+    {
+        if (&that != this) {
+            copy(that.m_head, m_head);
+            m_size = that.m_size;
+        }
+        return *this;
+    }
+
+    balanced_tree(balanced_tree&& that)
+        : m_head(that.m_head)
+        , m_size(that.m_size)
+    {
+        that.m_head = nullptr;
+    }
+    
+    balanced_tree& operator= (balanced_tree&& that)
+    {
+        if (&that != this) {
+            m_head = that.m_head;
+            m_size = that.m_size;
+            that.m_head = nullptr;
+        }
+        return *this;
+    }
+
+    ~balanced_tree()
+    {
+        free(m_head);
+    }
 
 public:
     /*
      * @brief insert
      */
-    std::pair<iterator, bool> insert(const value_type& value);
+    std::pair<iterator, bool> insert(const value_type& value)
+    {
+        // TODO!
+    }
 
     /*
      * @brief insert
      */
-    std::pair<iterator, bool> insert(value_type&& value);
+    std::pair<iterator, bool> insert(value_type&& value)
+    {
+        value_type tmp(value);
+        return insert(tmp);
+    }
 
     /*
      * @brief insert
      */
-    void insert(std::initializer_list<value_type> il);
+    void insert(std::initializer_list<value_type> il)
+    {
+        for (const auto& value : il) {
+            insert(value);
+        }
+    }
 
 public:
     /*
      * @brief removes all data from tree
      */
-    void clear();
+    void clear()
+    {
+        free(m_head);
+        m_size = 0;
+    }
 
     /*
      * @brief erase element from tree by position
      */
-    iterator erase(iterator position);
+    iterator erase(iterator position)
+    {
+        iterator new_position(position);
+        ++new_position;
+        // TODO!
+        return new_position;
+    }
 
     /*
      * @brief erase element from tree by position
      */
-    iterator erase(const_iterator position);
+    reverse_iterator erase(reverse_iterator position)
+    {
+        reverse_iterator new_position(position);
+        ++new_position;
+        // TODO!
+        return new_position;
+    }
 
     /*
      * @brief erase element from tree by value
