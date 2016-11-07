@@ -53,11 +53,7 @@ public:
     {
         that.m_head = nullptr;
     }
-<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
-    
-=======
 
->>>>>>> added pred/succ functionality
     balanced_tree& operator= (balanced_tree&& that)
     {
         if (&that != this) {
@@ -194,11 +190,7 @@ public:
 
 public:
     /*
-<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
-     * @brief find elementy by value
-=======
      * @brief get a begin iterator on container
->>>>>>> added pred/succ functionality
      */
     iterator begin()
     {
@@ -211,11 +203,7 @@ public:
     }
 
     /*
-<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
-     * @brief find elementy by value
-=======
      * @brief get a end iterator on container
->>>>>>> added pred/succ functionality
      */
     iterator end()
     {
@@ -229,7 +217,6 @@ public:
 
 public:
     /*
-<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
      * @brief get a begin iterator on container
      */
     iterator begin();
@@ -243,27 +230,18 @@ public:
     /*
      * @brief get a const begin iterator on container
      */
-    const_iterator cbegin() const;
-=======
-     * @brief get a const begin iterator on container
-     */
     const_iterator cbegin() const noexcept
     {
         return begin();
     }
->>>>>>> added pred/succ functionality
 
     /*
      * @brief get a const end iterator on container
      */
-<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
-    const_iterator cend() const;
-=======
     const_iterator cend() const noexcept
     {
         return end();
     }
->>>>>>> added pred/succ functionality
 
 public:
     /*
@@ -343,7 +321,6 @@ private:
             }
             return *this;
         }
-<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
 
         template <typename IterT>
         iterator_helper& operator= (const IterT& that)
@@ -395,8 +372,6 @@ private:
             return *this;
         }
 
-=======
-
         template <typename IterT>
         iterator_helper& operator= (const IterT& that)
         {
@@ -447,7 +422,6 @@ private:
             return *this;
         }
 
->>>>>>> added pred/succ functionality
         iterator_helper operator-- (int) const;
         {
             iterator_helper tmp = *this;
@@ -457,7 +431,6 @@ private:
 
     private:
         DataType m_data;
-<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
     };
 
     template <typename PointerType, typename ReferenceType, typename DataType>
@@ -568,7 +541,6 @@ private:
         DataType m_data;
     };
 
-=======
     };
 
     template <typename PointerType, typename ReferenceType, typename DataType>
@@ -678,31 +650,6 @@ private:
     private:
         DataType m_data;
     };
-
-private:
-    /*
-     * @brief returns the biggest element in the tree.
-     */
-    bt_node* max()
-    {
-        if (m_head == nullptr) {
-            return nullptr;
-        } else {
-            return m_head->max();
-        }
-    }
-
-    /*
-     * @brief returns the smallest element in the tree;
-     */
-    bt_node* min()
-    {
-        if (m_head == nullptr) {
-            return m_head;
-        } else {
-            return m_head->min();
-        }
-    }
 
 private:
     static bt_node* predecessor(const bt_node* node)
@@ -756,7 +703,6 @@ private:
         }
         return tmp;
     }
->>>>>>> added pred/succ functionality
 
 private:
     struct bt_node
