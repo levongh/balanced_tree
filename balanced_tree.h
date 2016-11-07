@@ -53,7 +53,11 @@ public:
     {
         that.m_head = nullptr;
     }
+<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
     
+=======
+
+>>>>>>> added pred/succ functionality
     balanced_tree& operator= (balanced_tree&& that)
     {
         if (&that != this) {
@@ -138,26 +142,94 @@ public:
     /*
      * @brief returns true  if tree is empty false another case
      */
-    bool empty() const noexcept;
+    bool empty() const noexcept
+    {
+        return m_head == nullptr;
+    }
 
     /*
      * @brief returns the size of tree
      */
-    size_type size() const noexcept;
+    size_type size() const noexcept
+    {
+        return m_size;
+    }
 
 public:
     /*
      * @brief find elementy by value
      */
-    iterator find(const value_type& value) noexcept;
+    iterator find(const value_type& value) noexcept
+    {
+        if (m_head == nullptr) {
+            return end();
+        } else {
+            if (m_head->m_value == value) {
+                return iterator{value};
+            } else if (m_head->m_value > value) {
+                m_head->m_right_child->find(value);
+            } else {
+                m_head->m_right_child->find(value);
+            }
+        }
+    }
 
     /*
      * @brief find elementy by value
      */
-    const_iterator find(const value_type& value) const noexcept;
+    const_iterator find(const value_type& value) const noexcept
+    {
+        if (m_head == nullptr) {
+            return cend();
+        } else {
+            if (m_head->m_value == value) {
+                return const_iterator{value};
+            } else if (m_head->m_value > value) {
+                return m_head->m_right_child->find(value);
+            } else {
+                return m_head->m_right_child->find(value);
+            }
+        }
+    }
 
 public:
     /*
+<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
+     * @brief find elementy by value
+=======
+     * @brief get a begin iterator on container
+>>>>>>> added pred/succ functionality
+     */
+    iterator begin()
+    {
+        return iterator{balanced_tree::min(m_head)};
+    }
+
+    const_iterator begin() const noexcept
+    {
+        return const_iterator{balanced_tree::min(m_head)};
+    }
+
+    /*
+<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
+     * @brief find elementy by value
+=======
+     * @brief get a end iterator on container
+>>>>>>> added pred/succ functionality
+     */
+    iterator end()
+    {
+        return iterator;
+    }
+
+    const_iterator end() const noexcept
+    {
+        return const_iterator;
+    }
+
+public:
+    /*
+<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
      * @brief get a begin iterator on container
      */
     iterator begin();
@@ -172,11 +244,26 @@ public:
      * @brief get a const begin iterator on container
      */
     const_iterator cbegin() const;
+=======
+     * @brief get a const begin iterator on container
+     */
+    const_iterator cbegin() const noexcept
+    {
+        return begin();
+    }
+>>>>>>> added pred/succ functionality
 
     /*
      * @brief get a const end iterator on container
      */
+<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
     const_iterator cend() const;
+=======
+    const_iterator cend() const noexcept
+    {
+        return end();
+    }
+>>>>>>> added pred/succ functionality
 
 public:
     /*
@@ -256,6 +343,7 @@ private:
             }
             return *this;
         }
+<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
 
         template <typename IterT>
         iterator_helper& operator= (const IterT& that)
@@ -307,6 +395,59 @@ private:
             return *this;
         }
 
+=======
+
+        template <typename IterT>
+        iterator_helper& operator= (const IterT& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        ~iterator_helper() = default;
+
+        reference operator* () const
+        {
+            return *m_data;
+        }
+
+        iterator_helper& operator++ ()
+        {
+            m_data = balanced_tree::successor(m_data);
+            return *this;
+        }
+
+        bool operator== (const iterator_helper& that)
+        {
+            return m_data = that.m_data;
+        }
+
+        bool operator!= (const iterator_helper& that)
+        {
+            return m_data != that.m_data;
+        }
+
+        reference operator-> ()
+        {
+            return *m_data;
+        }
+
+        const iterator_helper operator++ (int) const
+        {
+            iterator_helper tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        iterator_helper& operator-- ()
+        {
+            m_data = balanced_tree::predecessor(m_data);
+            return *this;
+        }
+
+>>>>>>> added pred/succ functionality
         iterator_helper operator-- (int) const;
         {
             iterator_helper tmp = *this;
@@ -316,6 +457,7 @@ private:
 
     private:
         DataType m_data;
+<<<<<<< 3c1073c9909c8f76146f77eb394872cfe15d8311
     };
 
     template <typename PointerType, typename ReferenceType, typename DataType>
@@ -426,6 +568,195 @@ private:
         DataType m_data;
     };
 
+=======
+    };
+
+    template <typename PointerType, typename ReferenceType, typename DataType>
+    class reverse_iterator_helper
+    {
+    public:
+        typedef difference_type std::ptrdiff_t;
+        typedef value_type balanced_tree::value_type;
+        typedef pointer PointerType;
+        typedef reference ReferenceType&;
+        typedef std::bidirectional_iterator_tag;
+
+    public:
+        reverse_iterator_helper()
+            : m_data(nullptr)
+        {}
+
+        reverse_iterator_helper(const reverse_iterator_helper& that)
+            : m_data(that.m_data)
+        {}
+
+        reverse_iterator_helper(reverse_iterator_helper&& that)
+            : m_data(that.m_data)
+        {
+            that.m_data = nullptr;
+        }
+
+        template <typename IterT>
+        reverse_iterator_helper(const IterT& that)
+            : m_data(that.m_data)
+        {}
+
+        reverse_iterator_helper& operator= (const reverse_iterator_helper& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        reverse_iterator_helper& operator= (reverse_iterator_helper&& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+                that.m_data = nullptr;
+            }
+            return *this;
+        }
+
+        template <typename IterT>
+        reverse_iterator_helper& operator= (const IterT& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        ~reverse_iterator_helper() = default;
+
+        reference operator* () const
+        {
+            return *m_data;
+        }
+
+        reverse_iterator_helper& operator++ ()
+        {
+            m_data = balanced_tree::predecessor(m_data);
+            return *this;
+        }
+
+        bool operator== (const reverse_iterator_helper& that)
+        {
+            return m_data = that.m_data;
+        }
+
+        bool operator!= (const reverse_iterator_helper& that)
+        {
+            return m_data != that.m_data;
+        }
+
+        reference operator-> ()
+        {
+            return *m_data;
+        }
+
+        const reverse_iterator_helper operator++ (int) const
+        {
+            reverse_iterator_helper tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        reverse_iterator_helper& operator-- ()
+        {
+            m_data = balanced_tree::successor(m_data);
+            return *this;
+        }
+
+        reverse_iterator_helper operator-- (int) const;
+        {
+            reverse_iterator_helper tmp = *this;
+            --(*this);
+            return tmp;
+        }
+
+    private:
+        DataType m_data;
+    };
+
+private:
+    /*
+     * @brief returns the biggest element in the tree.
+     */
+    bt_node* max()
+    {
+        if (m_head == nullptr) {
+            return nullptr;
+        } else {
+            return m_head->max();
+        }
+    }
+
+    /*
+     * @brief returns the smallest element in the tree;
+     */
+    bt_node* min()
+    {
+        if (m_head == nullptr) {
+            return m_head;
+        } else {
+            return m_head->min();
+        }
+    }
+
+private:
+    static bt_node* predecessor(const bt_node* node)
+    {
+        if (node == nullptr) {
+            return nullptr;
+        }
+        if (node->m_left_child != nullptr) {
+            return balanced_tree::max(node->m_left_child);
+        }
+        bt_node* parent = node->m_parent;
+        bt_node* current = node;
+        while (parent != nullptr && current == parent->m_left_child) {
+            current = parent;
+            parent = parent->m_parent;
+        }
+        return parent;
+    }
+
+    static bt_node* successor(const bt_node* node)
+    {
+        if (node == nullptr) {
+            return nullptr;
+        }
+        if (node->m_right_child != nullptr) {
+            return balanced_tree::min(node->m_right_child);
+        }
+        bt_node* parent = node->m_parent;
+        bt_node* current = node;
+        while (parent != nullptr && current == parent->m_right_child) {
+            current = parent;
+            parent = parent->m_parent
+        }
+        return parent;
+    }
+
+    static bt_node* max(const bt_node* node)
+    {
+        bt_node* tmp = node;
+        while (tmp->m_right_child != nullptr) {
+            tmp = tmp->m_right_child;
+        }
+        return tmp;
+    }
+
+    static bt_node* min(const bt_node* node)
+    {
+        bt_node* tmp = node;
+        while (tmp->m_left_child != nullptr) {
+            tmp = tmp->m_left_child;
+        }
+        return tmp;
+    }
+>>>>>>> added pred/succ functionality
 
 private:
     struct bt_node
