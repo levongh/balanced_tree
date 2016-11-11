@@ -258,11 +258,11 @@ private:
     class iterator_helper
     {
     public:
-        typedef difference_type std::ptrdiff_t;
-        typedef value_type balanced_tree::value_type;
-        typedef pointer PointerType;
-        typedef reference ReferenceType&;
-        typedef std::bidirectional_iterator_tag;
+        typedef std::ptrdiff_t difference_type;
+        typedef balanced_tree::value_type value_type;
+        typedef PointerType pointer;
+        typedef ReferenceType& reference;
+        typedef std::bidirectional_iterator_tag iterator_category;
 
     public:
         iterator_helper()
@@ -423,11 +423,11 @@ private:
     class reverse_iterator_helper
     {
     public:
-        typedef difference_type std::ptrdiff_t;
-        typedef value_type balanced_tree::value_type;
-        typedef pointer PointerType;
-        typedef reference ReferenceType&;
-        typedef std::bidirectional_iterator_tag;
+        typedef std::ptrdiff_t difference_type;
+        typedef balanced_tree::value_type value_type;
+        typedef PointerType pointer;
+        typedef ReferenceType& reference;
+        typedef std::bidirectional_iterator_tag iterator_category;
 
     public:
         reverse_iterator_helper()
@@ -544,7 +544,7 @@ private:
     static bt_node* find(const bt_node* node, const value_type& value);
     static void left_rotate(balanced_tree* tree, bt_node* x);
     static void right_rotate(balanced_tree* tree, bt_node* y);
-    static std::pair<iterator, bool> insert(const value_type& value, balanced_tree* tree, bt_node* node);
+    static std::pair<iterator, bool> insert(const value_type& value, bt_node* parent, bt_node* node);
     static int height(const bt_node* node);
     static int direction(const bt_node* node);
     static void refresh_heights(bt_node* node);
@@ -717,9 +717,57 @@ void balanced_tree::right_rotate(balanced_tree* tree, bt_node* y)
     y->m_parent = x;
 }
 
-std::pair<balanced_tree::iterator, bool> balanced_tree::insert(const value_type& value, balanced_tree* tree, bt_node* node)
+std::pair<balanced_tree::iterator, bool> balanced_tree::insert(const value_type& value, bt_node* parent, bt_node* node)
 {
-    // TODO!
+    std::pair<balanced_tree::iterator, bool> result;
+    if (node == nullptr) {
+        auto new_node = new bt_node(value);
+        new_node->m_parent = parent;
+        if (s_less_than(value, *parent->m_value)) {
+            parent->m_left_child = new_node;
+        } else {
+            parent->m_right_child = new_node;
+        }
+        return std::make_pair(iterator{new_node}, true);
+    }
+
+    if (!s_less_than(value, *node->m_value) &&
+        !s_less_than(*node->m_value, value)) {
+        return std::make_pair(iterator{node}, false);
+    } else if (s_less_than(value, *node->m_value)) {
+        result = insert(value, tree, node->m_left_child);
+    } else {
+        result = insert(value, tree, node->m_right_child);
+    }
+
+    if (!result.second) {
+        return result;
+    }
+
+    auto node_parent = node->m_parent;
+    if (node_parent != nullptr) {
+        auto dir = balanced_tree::direction(node_parent);
+        if (dir > 0 && node_parent->m_right_child == node) {
+            if (balanced_tree::direction(node) < 0) {
+                balanced_tree::right_rotate(node);
+                node = node_parent->m_right_child;
+            }
+            balanced_tree::left_rotate(node_parent);
+        }
+        if (dir < 0 && node_parent->m_left_child == node) {
+            if (balanced_tree::direction(node) > 0) {
+                balanced_tree::left_rotate(node);
+                node = node_parent->m_left_child;
+            }
+            balanced_tree::right_rotate(node_parent);
+        }
+    }
+
+    node->m_height = 1 + max(balanced_tree::height(node->m_left_child),
+                             balanced_tree::height(node->m_right_child));
+    node_parent->m_height = 1 + max(balanced_tree::height(node_parent->m_left_child),
+                             balanced_tree::height(node_parent->m_right_child));
+    return result;
 }
 
 int balanced_tree::height(const bt_node* node)
