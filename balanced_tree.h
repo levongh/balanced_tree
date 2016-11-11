@@ -239,7 +239,7 @@ public:
     {
         return reverse_iterator();
     }
-    
+
     const_reverse_iterator rend() const noexcept
     {
         return const_reverse_iterator();
@@ -646,11 +646,32 @@ void balanced_tree::destroy(const bt_node* node)
     destroy(node->m_right_child);
     node->m_right_child = nullptr;
     delete node;
-} 
+}
 
 void balanced_tree::destroy_one(const bt_node* node)
 {
-    // TODO!
+    const auto dir = balanced_tree::direction;
+    if (dir == 0) {
+        if (node->m_parent->m_left_child == node) {
+            node->m_parent->m_left_child = nullptr;
+        } else {
+            node->m_parent->m_right_child = nullptr;
+        }
+        delete node;
+    } else {
+        decltype(node) leaf_node = nullptr;
+        decltype(node) sub_tree_root = nullptr;
+        if (dir > 0) {
+            leaf_node = balanced_tree::min(node->m_right_child);
+            sub_tree_root = node->m_right_child;
+        } else {
+            leaf_node = balanced_tree::max(node->m_left_child);
+            sub_tree_root = node->m_left_child;
+        }
+        balanced_tree::swap(node, leaf_node);
+        destroy_one(leaf_node);
+        balanced_tree::refresh_heights(sub_tree_root);
+    }
 }
 
 balanced_tree::bt_node* balanced_tree::find(const bt_node* node, const value_type& value)
