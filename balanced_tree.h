@@ -13,8 +13,273 @@ template <typename T,
 class balanced_tree
 {
 private:
-    using value_type = typename T;
+    using value_type = T;
     using size_type = size_t;
+
+private:
+    struct bt_node
+    {
+        value_type* m_value;
+        bt_node* m_left_child;
+        bt_node* m_right_child;
+        bt_node* m_parent;
+        size_type m_height;
+
+        template <typename ... Args>
+        explicit bt_node(Args&& ... args)
+            : m_value(s_allocator.allocate(1))
+            , m_left_child(nullptr)
+            , m_right_child(nullptr)
+            , m_parent(nullptr)
+            , m_height(0)
+        {
+            s_allocator.construct(m_value, std::forward<Args>(args)...);
+        }
+
+        ~bt_node()
+        {
+            s_allocator.destroy(m_value);
+            s_allocator.deallocate(m_value, 1);
+        }
+    };
+
+private:
+    template <typename PointerType, typename ReferenceType, typename DataType>
+    class iterator_helper
+    {
+    public:
+        typedef std::ptrdiff_t difference_type;
+        typedef balanced_tree::value_type value_type;
+        typedef PointerType pointer;
+        typedef ReferenceType& reference;
+        typedef std::bidirectional_iterator_tag iterator_category;
+
+    public:
+        iterator_helper()
+            : m_data(nullptr)
+        {}
+
+        iterator_helper(const iterator_helper& that)
+            : m_data(that.m_data)
+        {}
+
+        iterator_helper(iterator_helper&& that)
+            : m_data(that.m_data)
+        {
+            that.m_data = nullptr;
+        }
+
+        template <typename IterT>
+        iterator_helper(const IterT& that)
+            : m_data(that.m_data)
+        {}
+
+    private:
+        explicit iterator_helper(DataType data)
+            : m_data(data)
+        {}
+
+    public:
+
+        iterator_helper& operator= (const iterator_helper& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        iterator_helper& operator= (iterator_helper&& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+                that.m_data = nullptr;
+            }
+            return *this;
+        }
+
+        template <typename IterT>
+        iterator_helper& operator= (const IterT& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        ~iterator_helper() = default;
+
+        reference operator* () const
+        {
+            return *m_data;
+        }
+
+        iterator_helper& operator++ ()
+        {
+            m_data = balanced_tree::successor(m_data);
+            return *this;
+        }
+
+        bool operator== (const iterator_helper& that)
+        {
+            return m_data = that.m_data;
+        }
+
+        bool operator!= (const iterator_helper& that)
+        {
+            return m_data != that.m_data;
+        }
+
+        reference operator-> ()
+        {
+            return *m_data;
+        }
+
+        const iterator_helper operator++ (int) const
+        {
+            iterator_helper tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        iterator_helper& operator-- ()
+        {
+            m_data = balanced_tree::predecessor(m_data);
+            return *this;
+        }
+
+        iterator_helper operator-- (int) const
+        {
+            iterator_helper tmp = *this;
+            --(*this);
+            return tmp;
+        }
+
+    private:
+        DataType m_data;
+    };
+
+    template <typename PointerType, typename ReferenceType, typename DataType>
+    class reverse_iterator_helper
+    {
+    public:
+        typedef std::ptrdiff_t difference_type;
+        typedef balanced_tree::value_type value_type;
+        typedef PointerType pointer;
+        typedef ReferenceType& reference;
+        typedef std::bidirectional_iterator_tag iterator_category;
+
+    public:
+        reverse_iterator_helper()
+            : m_data(nullptr)
+        {}
+
+        reverse_iterator_helper(const reverse_iterator_helper& that)
+            : m_data(that.m_data)
+        {}
+
+        reverse_iterator_helper(reverse_iterator_helper&& that)
+            : m_data(that.m_data)
+        {
+            that.m_data = nullptr;
+        }
+
+        template <typename IterT>
+        reverse_iterator_helper(const IterT& that)
+            : m_data(that.m_data)
+        {}
+
+    private:
+        explicit reverse_iterator_helper(DataType data)
+            : m_data(data)
+        {}
+
+    public:
+
+        reverse_iterator_helper& operator= (const reverse_iterator_helper& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        reverse_iterator_helper& operator= (reverse_iterator_helper&& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+                that.m_data = nullptr;
+            }
+            return *this;
+        }
+
+        template <typename IterT>
+        reverse_iterator_helper& operator= (const IterT& that)
+        {
+            if (&that != this) {
+                m_data = that.m_data;
+            }
+            return *this;
+        }
+
+        ~reverse_iterator_helper() = default;
+
+        reference operator* () const
+        {
+            return *m_data;
+        }
+
+        reverse_iterator_helper& operator++ ()
+        {
+            m_data = balanced_tree::predecessor(m_data);
+            return *this;
+        }
+
+        bool operator== (const reverse_iterator_helper& that)
+        {
+            return m_data = that.m_data;
+        }
+
+        bool operator!= (const reverse_iterator_helper& that)
+        {
+            return m_data != that.m_data;
+        }
+
+        reference operator-> ()
+        {
+            return *m_data;
+        }
+
+        const reverse_iterator_helper operator++ (int) const
+        {
+            reverse_iterator_helper tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        reverse_iterator_helper& operator-- ()
+        {
+            m_data = balanced_tree::successor(m_data);
+            return *this;
+        }
+
+        reverse_iterator_helper operator-- (int) const
+        {
+            reverse_iterator_helper tmp = *this;
+            --(*this);
+            return tmp;
+        }
+
+    private:
+        DataType m_data;
+    };
+
+public:
+    typedef iterator_helper<value_type*, value_type, bt_node*> iterator;
+    typedef iterator_helper<value_type const *, const value_type, bt_node const *> const_iterator;
+
+    typedef reverse_iterator_helper<value_type*, value_type, bt_node*> reverse_iterator;
+    typedef reverse_iterator_helper<value_type const *, const value_type, bt_node const *> const_reverse_iterator;
 
     // @{public interfaces
 public:
@@ -75,7 +340,7 @@ public:
      */
     std::pair<iterator, bool> insert(const value_type& value)
     {
-        return balanced_tree::insert(value, tree, m_head);
+        return balanced_tree::insert(value, nullptr, m_head);
     }
 
     /*
@@ -244,295 +509,7 @@ public:
     {
         return const_reverse_iterator();
     }
-
-public:
-    typedef iterator iterator_helper<value_type*, value_type, bt_node*>;
-    typedef const_iterator iterator_helper<value_type const *, const value_type, bt_node const *>;
-
-    typedef reverse_iterator reverse_iterator_helper<value_type*, value_type, bt_node*>;
-    typedef const_reverse_iterator reverse_iterator_helper<value_type const *, const value_type, bt_node const *>;
-
     // @}
-private:
-    template <typename PointerType, typename ReferenceType, typename DataType>
-    class iterator_helper
-    {
-    public:
-        typedef std::ptrdiff_t difference_type;
-        typedef balanced_tree::value_type value_type;
-        typedef PointerType pointer;
-        typedef ReferenceType& reference;
-        typedef std::bidirectional_iterator_tag iterator_category;
-
-    public:
-        iterator_helper()
-            : m_data(nullptr)
-        {}
-
-        iterator_helper(const iterator_helper& that)
-            : m_data(that.m_data)
-        {}
-
-        iterator_helper(iterator_helper&& that)
-            : m_data(that.m_data)
-        {
-            that.m_data = nullptr;
-        }
-
-        template <typename IterT>
-        iterator_helper(const IterT& that)
-            : m_data(that.m_data)
-        {}
-
-    private:
-        explicit iterator_helper(DataType data)
-            : m_data(data)
-        {}
-
-    public:
-
-        iterator_helper& operator= (const iterator_helper& that)
-        {
-            if (&that != this) {
-                m_data = that.m_data;
-            }
-            return *this;
-        }
-
-        iterator_helper& operator= (iterator_helper&& that)
-        {
-            if (&that != this) {
-                m_data = that.m_data;
-                that.m_data = nullptr;
-            }
-            return *this;
-        }
-
-        template <typename IterT>
-        iterator_helper& operator= (const IterT& that)
-        {
-            if (&that != this) {
-                m_data = that.m_data;
-            }
-            return *this;
-        }
-
-        ~iterator_helper() = default;
-
-        reference operator* () const
-        {
-            return *m_data;
-        }
-
-        iterator_helper& operator++ ()
-        {
-            m_data = balanced_tree::successor(m_data);
-            return *this;
-        }
-
-        bool operator== (const iterator_helper& that)
-        {
-            return m_data = that.m_data;
-        }
-
-        bool operator!= (const iterator_helper& that)
-        {
-            return m_data != that.m_data;
-        }
-
-        reference operator-> ()
-        {
-            return *m_data;
-        }
-
-        const iterator_helper operator++ (int) const
-        {
-            iterator_helper tmp = *this;
-            ++(*this);
-            return tmp;
-        }
-
-        iterator_helper& operator-- ()
-        {
-            m_data = balanced_tree::predecessor(m_data);
-            return *this;
-        }
-
-        template <typename IterT>
-        iterator_helper& operator= (const IterT& that)
-        {
-            if (&that != this) {
-                m_data = that.m_data;
-            }
-            return *this;
-        }
-
-        ~iterator_helper() = default;
-
-        reference operator* () const
-        {
-            return *m_data;
-        }
-
-        iterator_helper& operator++ ()
-        {
-            m_data = balanced_tree::successor(m_data);
-            return *this;
-        }
-
-        bool operator== (const iterator_helper& that)
-        {
-            return m_data = that.m_data;
-        }
-
-        bool operator!= (const iterator_helper& that)
-        {
-            return m_data != that.m_data;
-        }
-
-        reference operator-> ()
-        {
-            return *m_data;
-        }
-
-        const iterator_helper operator++ (int) const
-        {
-            iterator_helper tmp = *this;
-            ++(*this);
-            return tmp;
-        }
-
-        iterator_helper& operator-- ()
-        {
-            m_data = balanced_tree::predecessor(m_data);
-            return *this;
-        }
-
-        iterator_helper operator-- (int) const;
-        {
-            iterator_helper tmp = *this;
-            --(*this);
-            return tmp;
-        }
-
-    private:
-        DataType m_data;
-    };
-
-    template <typename PointerType, typename ReferenceType, typename DataType>
-    class reverse_iterator_helper
-    {
-    public:
-        typedef std::ptrdiff_t difference_type;
-        typedef balanced_tree::value_type value_type;
-        typedef PointerType pointer;
-        typedef ReferenceType& reference;
-        typedef std::bidirectional_iterator_tag iterator_category;
-
-    public:
-        reverse_iterator_helper()
-            : m_data(nullptr)
-        {}
-
-        reverse_iterator_helper(const reverse_iterator_helper& that)
-            : m_data(that.m_data)
-        {}
-
-        reverse_iterator_helper(reverse_iterator_helper&& that)
-            : m_data(that.m_data)
-        {
-            that.m_data = nullptr;
-        }
-
-        template <typename IterT>
-        reverse_iterator_helper(const IterT& that)
-            : m_data(that.m_data)
-        {}
-
-    private:
-        explicit reverse_iterator_helper(DataType data)
-            : m_data(data)
-        {}
-
-    public:
-
-        reverse_iterator_helper& operator= (const reverse_iterator_helper& that)
-        {
-            if (&that != this) {
-                m_data = that.m_data;
-            }
-            return *this;
-        }
-
-        reverse_iterator_helper& operator= (reverse_iterator_helper&& that)
-        {
-            if (&that != this) {
-                m_data = that.m_data;
-                that.m_data = nullptr;
-            }
-            return *this;
-        }
-
-        template <typename IterT>
-        reverse_iterator_helper& operator= (const IterT& that)
-        {
-            if (&that != this) {
-                m_data = that.m_data;
-            }
-            return *this;
-        }
-
-        ~reverse_iterator_helper() = default;
-
-        reference operator* () const
-        {
-            return *m_data;
-        }
-
-        reverse_iterator_helper& operator++ ()
-        {
-            m_data = balanced_tree::predecessor(m_data);
-            return *this;
-        }
-
-        bool operator== (const reverse_iterator_helper& that)
-        {
-            return m_data = that.m_data;
-        }
-
-        bool operator!= (const reverse_iterator_helper& that)
-        {
-            return m_data != that.m_data;
-        }
-
-        reference operator-> ()
-        {
-            return *m_data;
-        }
-
-        const reverse_iterator_helper operator++ (int) const
-        {
-            reverse_iterator_helper tmp = *this;
-            ++(*this);
-            return tmp;
-        }
-
-        reverse_iterator_helper& operator-- ()
-        {
-            m_data = balanced_tree::successor(m_data);
-            return *this;
-        }
-
-        reverse_iterator_helper operator-- (int) const;
-        {
-            reverse_iterator_helper tmp = *this;
-            --(*this);
-            return tmp;
-        }
-
-    private:
-        DataType m_data;
-    };
 
 private:
     static bt_node* predecessor(const bt_node* node);
@@ -549,33 +526,6 @@ private:
     static int direction(const bt_node* node);
     static void refresh_heights(bt_node* node);
 
-private:
-    struct bt_node
-    {
-        value_type* m_value;
-        bt_node* m_left_child;
-        bt_node* m_right_child;
-        bt_node* m_parent;
-        size_type m_height;
-
-        template <typename ... Args>
-        explicit bt_node(Args&& ... args)
-            : m_value(s_allocator.allocate(1))
-            , m_left_child(nullptr)
-            , m_right_child(nullptr)
-            , m_parent(nullptr)
-            , m_height(0)
-        {
-            s_allocator.construct(m_value, std::forward<Args>(args)...);
-        }
-
-        ~bt_node()
-        {
-            s_allocator.destroy(m_value);
-            s_allocator.deallocate(m_value, 1);
-        }
-    };
-
     bt_node* m_head;
     size_type m_size;
 
@@ -584,7 +534,8 @@ private:
     static Allocator s_allocator;
 };
 
-balanced_tree::bt_node* balanced_tree::predecessor(const bt_node* node)
+template <typename T, typename Compare, typename Allocator>
+typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::predecessor(const bt_node* node)
 {
     if (node == nullptr) {
         return nullptr;
@@ -601,7 +552,9 @@ balanced_tree::bt_node* balanced_tree::predecessor(const bt_node* node)
     return parent;
 }
 
-balanced_tree::bt_node* balanced_tree::successor(const bt_node* node)
+
+template <typename T, typename Compare, typename Allocator>
+typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::successor(const bt_node* node)
 {
     if (node == nullptr) {
         return nullptr;
@@ -613,12 +566,13 @@ balanced_tree::bt_node* balanced_tree::successor(const bt_node* node)
     auto current = node;
     while (parent != nullptr && current == parent->m_right_child) {
         current = parent;
-        parent = parent->m_parent
+        parent = parent->m_parent;
     }
     return parent;
 }
 
-balanced_tree::bt_node* balanced_tree::max(const bt_node* node)
+template <typename T, typename Compare, typename Allocator>
+typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::max(const bt_node* node)
 {
     auto tmp = node;
     while (tmp->m_right_child != nullptr) {
@@ -627,7 +581,8 @@ balanced_tree::bt_node* balanced_tree::max(const bt_node* node)
     return tmp;
 }
 
-balanced_tree::bt_node* balanced_tree::min(const bt_node* node)
+template <typename T, typename Compare, typename Allocator>
+typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::min(const bt_node* node)
 {
     auto tmp = node;
     while (tmp->m_left_child != nullptr) {
@@ -636,7 +591,8 @@ balanced_tree::bt_node* balanced_tree::min(const bt_node* node)
     return tmp;
 }
 
-void balanced_tree::destroy(const bt_node* node)
+template <typename T, typename Compare, typename Allocator>
+void balanced_tree<T, Compare, Allocator>::destroy(const bt_node* node)
 {
     if (node == nullptr) {
         return;
@@ -648,7 +604,8 @@ void balanced_tree::destroy(const bt_node* node)
     delete node;
 }
 
-void balanced_tree::destroy_one(const bt_node* node)
+template <typename T, typename Compare, typename Allocator>
+void balanced_tree<T, Compare, Allocator>::destroy_one(const bt_node* node)
 {
     const auto dir = balanced_tree::direction;
     if (dir == 0) {
@@ -674,7 +631,8 @@ void balanced_tree::destroy_one(const bt_node* node)
     }
 }
 
-balanced_tree::bt_node* balanced_tree::find(const bt_node* node, const value_type& value)
+template <typename T, typename Compare, typename Allocator>
+typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::find(const bt_node* node, const value_type& value)
 {
     if (node == nullptr) {
         return nullptr;
@@ -690,7 +648,8 @@ balanced_tree::bt_node* balanced_tree::find(const bt_node* node, const value_typ
     return nullptr;
 }
 
-void balanced_tree::left_rotate(balanced_tree* tree, bt_node* x)
+template <typename T, typename Compare, typename Allocator>
+void balanced_tree<T, Compare, Allocator>::left_rotate(balanced_tree* tree, bt_node* x)
 {
     auto y = x->m_right_child;
     if (y == nullptr) {
@@ -714,7 +673,8 @@ void balanced_tree::left_rotate(balanced_tree* tree, bt_node* x)
     x->m_parent = y;
 }
 
-void balanced_tree::right_rotate(balanced_tree* tree, bt_node* y)
+template <typename T, typename Compare, typename Allocator>
+void balanced_tree<T, Compare, Allocator>::right_rotate(balanced_tree* tree, bt_node* y)
 {
     auto x = y->m_left_child;
     if (x == nullptr) {
@@ -738,16 +698,19 @@ void balanced_tree::right_rotate(balanced_tree* tree, bt_node* y)
     y->m_parent = x;
 }
 
-std::pair<balanced_tree::iterator, bool> balanced_tree::insert(const value_type& value, bt_node* parent, bt_node* node)
+template <typename T, typename Compare, typename Allocator>
+std::pair<typename balanced_tree<T, Compare, Allocator>::iterator, bool> balanced_tree<T, Compare, Allocator>::insert(const value_type& value, bt_node* parent, bt_node* node)
 {
     std::pair<balanced_tree::iterator, bool> result;
     if (node == nullptr) {
         auto new_node = new bt_node(value);
-        new_node->m_parent = parent;
-        if (s_less_than(value, *parent->m_value)) {
-            parent->m_left_child = new_node;
-        } else {
-            parent->m_right_child = new_node;
+        if (parent != nullptr) {
+            new_node->m_parent = parent;
+            if (s_less_than(value, *parent->m_value)) {
+                parent->m_left_child = new_node;
+            } else {
+                parent->m_right_child = new_node;
+            }
         }
         return std::make_pair(iterator{new_node}, true);
     }
@@ -756,9 +719,9 @@ std::pair<balanced_tree::iterator, bool> balanced_tree::insert(const value_type&
         !s_less_than(*node->m_value, value)) {
         return std::make_pair(iterator{node}, false);
     } else if (s_less_than(value, *node->m_value)) {
-        result = insert(value, tree, node->m_left_child);
+        result = insert(value, parent, node->m_left_child);
     } else {
-        result = insert(value, tree, node->m_right_child);
+        result = insert(value, parent, node->m_right_child);
     }
 
     if (!result.second) {
@@ -791,7 +754,8 @@ std::pair<balanced_tree::iterator, bool> balanced_tree::insert(const value_type&
     return result;
 }
 
-int balanced_tree::height(const bt_node* node)
+template <typename T, typename Compare, typename Allocator>
+int balanced_tree<T, Compare, Allocator>::height(const bt_node* node)
 {
     if (node == nullptr) {
         return -1;
@@ -800,7 +764,8 @@ int balanced_tree::height(const bt_node* node)
     }
 }
 
-int balanced_tree::direction(const bt_node* node)
+template <typename T, typename Compare, typename Allocator>
+int balanced_tree<T, Compare, Allocator>::direction(const bt_node* node)
 {
     if (node == nullptr) {
         return 0;
@@ -810,7 +775,8 @@ int balanced_tree::direction(const bt_node* node)
     }
 }
 
-void balanced_tree::refresh_heights(bt_node* node)
+template <typename T, typename Compare, typename Allocator>
+void balanced_tree<T, Compare, Allocator>::refresh_heights(bt_node* node)
 {
     if (node == nullptr) {
         return;
