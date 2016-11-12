@@ -47,6 +47,7 @@ private:
     template <typename PointerType, typename ReferenceType, typename DataType>
     class iterator_helper
     {
+        friend balanced_tree;
     public:
         typedef std::ptrdiff_t difference_type;
         typedef balanced_tree::value_type value_type;
@@ -111,7 +112,7 @@ private:
 
         reference operator* () const
         {
-            return *m_data;
+            return *m_data->m_value;
         }
 
         iterator_helper& operator++ ()
@@ -132,7 +133,7 @@ private:
 
         reference operator-> ()
         {
-            return *m_data;
+            return *m_data->m_value;
         }
 
         const iterator_helper operator++ (int) const
@@ -162,6 +163,7 @@ private:
     template <typename PointerType, typename ReferenceType, typename DataType>
     class reverse_iterator_helper
     {
+        friend balanced_tree;
     public:
         typedef std::ptrdiff_t difference_type;
         typedef balanced_tree::value_type value_type;
@@ -226,7 +228,7 @@ private:
 
         reference operator* () const
         {
-            return *m_data;
+            return *m_data->m_value;
         }
 
         reverse_iterator_helper& operator++ ()
@@ -247,7 +249,7 @@ private:
 
         reference operator-> ()
         {
-            return *m_data;
+            return *m_data->m_value;
         }
 
         const reverse_iterator_helper operator++ (int) const
@@ -300,13 +302,13 @@ public:
         : m_head(nullptr)
         , m_size(that.m_size)
     {
-        copy(that.m_head, m_head);
+        balanced_tree::copy(that.m_head, m_head);
     }
 
     balanced_tree& operator= (const balanced_tree& that)
     {
         if (&that != this) {
-            copy(that.m_head, m_head);
+            balanced_tree::copy(that.m_head, m_head);
             m_size = that.m_size;
         }
         return *this;
@@ -340,7 +342,11 @@ public:
      */
     std::pair<iterator, bool> insert(const value_type& value)
     {
-        return balanced_tree::insert(value, nullptr, m_head);
+        auto result = balanced_tree::insert(value, this, nullptr, m_head);
+        if (result.second) {
+            ++m_size;
+        }
+        return result;
     }
 
     /*
@@ -379,7 +385,8 @@ public:
     {
         iterator new_position(position);
         ++new_position;
-        balanced_tree::destroy_one(&(*position));
+        balanced_tree::destroy_one(position.m_data);
+        --m_size;
         return new_position;
     }
 
@@ -390,19 +397,22 @@ public:
     {
         reverse_iterator new_position(position);
         ++new_position;
-        balanced_tree::destroy_one(&(*position));
+        balanced_tree::destroy_one(position.m_data);
+        --m_size;
         return new_position;
     }
 
     /*
      * @brief erase element from tree by value
      */
-    void erase(const value_type& value)
+    size_type erase(const value_type& value)
     {
-        const auto iter = find(value);
+        auto iter = find(value);
         if (iter != end()) {
             erase(iter);
+            return 1;
         }
+        return 0;
     }
 
 public:
@@ -514,17 +524,19 @@ public:
 private:
     static bt_node* predecessor(const bt_node* node);
     static bt_node* successor(const bt_node* node);
-    static bt_node* max(const bt_node* node);
-    static bt_node* min(const bt_node* node);
-    static void destroy(const bt_node* node);
-    static void destroy_one(const bt_node* node);
-    static bt_node* find(const bt_node* node, const value_type& value);
+    static bt_node* max(bt_node* node);
+    static bt_node* min(bt_node* node);
+    static void destroy(bt_node* node);
+    static void destroy_one(bt_node* node);
+    static const bt_node* find(const bt_node* node, const value_type& value);
+    static bt_node* find(bt_node* node, const value_type& value);
     static void left_rotate(balanced_tree* tree, bt_node* x);
     static void right_rotate(balanced_tree* tree, bt_node* y);
-    static std::pair<iterator, bool> insert(const value_type& value, bt_node* parent, bt_node* node);
+    static std::pair<iterator, bool> insert(const value_type& value, balanced_tree* tree, bt_node* parent, bt_node* node);
     static int height(const bt_node* node);
     static int direction(const bt_node* node);
     static void refresh_heights(bt_node* node);
+    static void swap(bt_node* src, bt_node* dest);
 
     bt_node* m_head;
     size_type m_size;
@@ -533,6 +545,12 @@ private:
     static Compare s_less_than;
     static Allocator s_allocator;
 };
+
+template <typename T, typename Compare, typename Allocator>
+Compare balanced_tree<T, Compare, Allocator>::s_less_than;
+
+template <typename T, typename Compare, typename Allocator>
+Allocator balanced_tree<T, Compare, Allocator>::s_allocator;
 
 template <typename T, typename Compare, typename Allocator>
 typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::predecessor(const bt_node* node)
@@ -572,8 +590,11 @@ typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare
 }
 
 template <typename T, typename Compare, typename Allocator>
-typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::max(const bt_node* node)
+typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::max(bt_node* node)
 {
+    if (node == nullptr) {
+        return nullptr;
+    }
     auto tmp = node;
     while (tmp->m_right_child != nullptr) {
         tmp = tmp->m_right_child;
@@ -582,8 +603,11 @@ typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare
 }
 
 template <typename T, typename Compare, typename Allocator>
-typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::min(const bt_node* node)
+typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::min(bt_node* node)
 {
+    if (node == nullptr) {
+        return nullptr;
+    }
     auto tmp = node;
     while (tmp->m_left_child != nullptr) {
         tmp = tmp->m_left_child;
@@ -592,7 +616,7 @@ typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare
 }
 
 template <typename T, typename Compare, typename Allocator>
-void balanced_tree<T, Compare, Allocator>::destroy(const bt_node* node)
+void balanced_tree<T, Compare, Allocator>::destroy(bt_node* node)
 {
     if (node == nullptr) {
         return;
@@ -605,9 +629,9 @@ void balanced_tree<T, Compare, Allocator>::destroy(const bt_node* node)
 }
 
 template <typename T, typename Compare, typename Allocator>
-void balanced_tree<T, Compare, Allocator>::destroy_one(const bt_node* node)
+void balanced_tree<T, Compare, Allocator>::destroy_one(bt_node* node)
 {
-    const auto dir = balanced_tree::direction;
+    const auto dir = balanced_tree::direction(node);
     if (dir == 0) {
         if (node->m_parent->m_left_child == node) {
             node->m_parent->m_left_child = nullptr;
@@ -632,7 +656,24 @@ void balanced_tree<T, Compare, Allocator>::destroy_one(const bt_node* node)
 }
 
 template <typename T, typename Compare, typename Allocator>
-typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::find(const bt_node* node, const value_type& value)
+typename balanced_tree<T, Compare, Allocator>::bt_node const* balanced_tree<T, Compare, Allocator>::find(const bt_node* node, const value_type& value)
+{
+    if (node == nullptr) {
+        return nullptr;
+    }
+    if (!s_less_than(*node->m_value, value) &&
+            !s_less_than(value, *node->m_value)) {
+        return node;
+    } else if (s_less_than(*node->m_value, value)) {
+        return find(node->m_right_child, value);
+    } else {
+        return find(node->m_left_child, value);
+    }
+    return nullptr;
+}
+
+template <typename T, typename Compare, typename Allocator>
+typename balanced_tree<T, Compare, Allocator>::bt_node* balanced_tree<T, Compare, Allocator>::find(bt_node* node, const value_type& value)
 {
     if (node == nullptr) {
         return nullptr;
@@ -699,7 +740,7 @@ void balanced_tree<T, Compare, Allocator>::right_rotate(balanced_tree* tree, bt_
 }
 
 template <typename T, typename Compare, typename Allocator>
-std::pair<typename balanced_tree<T, Compare, Allocator>::iterator, bool> balanced_tree<T, Compare, Allocator>::insert(const value_type& value, bt_node* parent, bt_node* node)
+std::pair<typename balanced_tree<T, Compare, Allocator>::iterator, bool> balanced_tree<T, Compare, Allocator>::insert(const value_type& value, balanced_tree* tree, bt_node* parent, bt_node* node)
 {
     std::pair<balanced_tree::iterator, bool> result;
     if (node == nullptr) {
@@ -711,6 +752,8 @@ std::pair<typename balanced_tree<T, Compare, Allocator>::iterator, bool> balance
             } else {
                 parent->m_right_child = new_node;
             }
+        } else {
+            tree->m_head = new_node;
         }
         return std::make_pair(iterator{new_node}, true);
     }
@@ -719,9 +762,9 @@ std::pair<typename balanced_tree<T, Compare, Allocator>::iterator, bool> balance
         !s_less_than(*node->m_value, value)) {
         return std::make_pair(iterator{node}, false);
     } else if (s_less_than(value, *node->m_value)) {
-        result = insert(value, parent, node->m_left_child);
+        result = insert(value, tree, node, node->m_left_child);
     } else {
-        result = insert(value, parent, node->m_right_child);
+        result = insert(value, tree, node, node->m_right_child);
     }
 
     if (!result.second) {
@@ -733,24 +776,29 @@ std::pair<typename balanced_tree<T, Compare, Allocator>::iterator, bool> balance
         auto dir = balanced_tree::direction(node_parent);
         if (dir > 0 && node_parent->m_right_child == node) {
             if (balanced_tree::direction(node) < 0) {
-                balanced_tree::right_rotate(node);
+                balanced_tree::right_rotate(tree, node);
                 node = node_parent->m_right_child;
             }
-            balanced_tree::left_rotate(node_parent);
+            balanced_tree::left_rotate(tree, node_parent);
         }
         if (dir < 0 && node_parent->m_left_child == node) {
             if (balanced_tree::direction(node) > 0) {
-                balanced_tree::left_rotate(node);
+                balanced_tree::left_rotate(tree, node);
                 node = node_parent->m_left_child;
             }
-            balanced_tree::right_rotate(node_parent);
+            balanced_tree::right_rotate(tree, node_parent);
         }
     }
 
+#define max(a, b) (((a) > (b)) ? (a) : (b))
     node->m_height = 1 + max(balanced_tree::height(node->m_left_child),
                              balanced_tree::height(node->m_right_child));
-    node_parent->m_height = 1 + max(balanced_tree::height(node_parent->m_left_child),
-                             balanced_tree::height(node_parent->m_right_child));
+    if (node_parent != nullptr) {
+        node_parent->m_height = 1 + max(balanced_tree::height(node_parent->m_left_child),
+                                        balanced_tree::height(node_parent->m_right_child));
+    }
+#undef max
+
     return result;
 }
 
@@ -783,8 +831,18 @@ void balanced_tree<T, Compare, Allocator>::refresh_heights(bt_node* node)
     }
     refresh_heights(node->m_left_child);
     refresh_heights(node->m_right_child);
+#define max(a, b) (((a) > (b)) ? (a) : (b))
     node->m_height = 1 + max(balanced_tree::height(node->m_left_child),
                              balanced_tree::height(node->m_right_child));
+#undef max
+}
+
+template <typename T, typename Compare, typename Allocator>
+void balanced_tree<T, Compare, Allocator>::swap(bt_node* src, bt_node* dest)
+{
+    const auto temp = *src->m_value;
+    *src->m_value = *dest->m_value;
+    *dest->m_value = temp;
 }
 
 } // namespace std
