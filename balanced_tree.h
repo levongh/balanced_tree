@@ -302,13 +302,13 @@ public:
         : m_head(nullptr)
         , m_size(that.m_size)
     {
-        balanced_tree::copy(that.m_head, m_head);
+        balanced_tree::copy(that.m_head, m_head, nullptr);
     }
 
     balanced_tree& operator= (const balanced_tree& that)
     {
         if (&that != this) {
-            balanced_tree::copy(that.m_head, m_head);
+            balanced_tree::copy(that.m_head, m_head, nullptr);
             m_size = that.m_size;
         }
         return *this;
@@ -319,6 +319,7 @@ public:
         , m_size(that.m_size)
     {
         that.m_head = nullptr;
+        that.m_size = 0;
     }
 
     balanced_tree& operator= (balanced_tree&& that)
@@ -327,6 +328,7 @@ public:
             m_head = that.m_head;
             m_size = that.m_size;
             that.m_head = nullptr;
+            that.m_size = 0;
         }
         return *this;
     }
@@ -537,6 +539,7 @@ private:
     static int direction(const bt_node* node);
     static void refresh_heights(bt_node* node);
     static void swap(bt_node* src, bt_node* dest);
+    static void copy(const bt_node* src, bt_node*& dest, bt_node* parent);
 
     bt_node* m_head;
     size_type m_size;
@@ -843,6 +846,18 @@ void balanced_tree<T, Compare, Allocator>::swap(bt_node* src, bt_node* dest)
     const auto temp = *src->m_value;
     *src->m_value = *dest->m_value;
     *dest->m_value = temp;
+}
+
+template <typename T, typename Compare, typename Allocator>
+void balanced_tree<T, Compare, Allocator>::copy(const bt_node* src, bt_node*& dest, bt_node* parent)
+{
+    if (src == nullptr) {
+        return;
+    }
+    dest = new bt_node(*src->m_value);
+    dest->m_parent = parent;
+    copy(src->m_left_child, dest->m_left_child, dest);
+    copy(src->m_right_child, dest->m_right_child, dest);
 }
 
 } // namespace std

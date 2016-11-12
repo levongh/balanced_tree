@@ -41,5 +41,21 @@ int main()
     for (const auto& val : empty) {
         std::cout << val << std::endl;
     }
+
+    std::balanced_tree<int> filled2(filled);
+    std::cout << "Printing the filled2 one with size " << filled2.size() << "\n";
+    for (const auto& val : filled2) {
+        std::cout << val << std::endl;
+    }
+
+    std::balanced_tree<int> empty2(std::move(empty));
+    std::cout << "Printing the empty2 one with size " << empty2.size() << "\n";
+    for (const auto& val : empty2) {
+        std::cout << val << std::endl;
+    }
+    std::cout << "Printing the empty one with size " << empty.size() << "\n";
+    for (const auto& val : empty) {
+        std::cout << val << std::endl;
+    }
 }
 
