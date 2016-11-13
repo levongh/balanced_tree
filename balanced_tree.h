@@ -378,6 +378,7 @@ public:
     {
         balanced_tree::destroy(m_head);
         m_size = 0;
+        m_head = nullptr;
     }
 
     /*

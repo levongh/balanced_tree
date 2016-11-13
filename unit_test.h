@@ -109,12 +109,12 @@ void clear()
     std::balanced_tree<int> tree;
     test::initailize(tree);
 
-  /*  tree.clear();
+    tree.clear();
     if (tree.size() == 0 && tree.empty()) {
        std::cout << "PASS    " << __FUNCTION__ << std::endl;
     } else {
        std::cout << "FAILED " << __FUNCTION__ << std::endl;
-    }*/
+    }
 }
 
 void begin_and_rend()
