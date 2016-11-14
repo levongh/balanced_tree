@@ -15,7 +15,5 @@ int main()
     move_constructor();
     move_assignement();
     clear();
-    begin_and_rend();
-    //testing_with_couts();
 }
 
